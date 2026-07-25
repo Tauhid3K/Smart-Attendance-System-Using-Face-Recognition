@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block active_tab %}records{% endblock %}
+{% block page_title %}Attendance Records{% endblock %}
+{% block page_subtitle %}Review history, search student logs, and export reports.{% endblock %}
+
+{% block content %}
+<div class="card filter-card">
+  <div class="card-header">
+    <h2><i class="fa-solid fa-filter"></i> Filters</h2>
+  </div>
+  <div class="filter-controls">
+    <div class="filter-group">
+      <label for="filter-date">Date</label>
+      <input type="date" id="filter-date" />
+    </div>
+    <div class="filter-group">
+      <label for="filter-search">Search Name</label>
+      <input type="text" id="filter-search" placeholder="Enter student name..." />
+    </div>
+    <div class="filter-buttons">
+      <button class="btn btn-primary" id="btn-apply-filters">
+        <i class="fa-solid fa-magnifying-glass"></i> 🔍 Apply
+      </button>
+      <button class="btn btn-secondary" id="btn-reset-filters">
+        <i class="fa-solid fa-rotate-left"></i> 🔄 Reset
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="card records-list-card">
+  <div class="card-header records-header">
+    <h2>📋 Attendance Records</h2>
+    <button class="btn btn-success" id="btn-export-records-csv">
+      <i class="fa-solid fa-file-csv"></i> 📤 Export CSV
+    </button>
+  </div>
+  
+  <div class="table-container">
+    <table class="data-table" id="records-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date</th>
+          <th>Name</th>
+          <th>Time</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="records-table-body">
+        <!-- Rendered Dynamically -->
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="records-footer">
+    <span id="records-total-count">Total Records: 0</span>
+  </div>
+</div>
+{% endblock %}

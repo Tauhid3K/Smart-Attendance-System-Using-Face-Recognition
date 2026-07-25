@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block active_tab %}dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome to your attendance control center.{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+  <div class="stat-card total-students-card">
+    <div class="stat-icon">
+      <i class="fa-solid fa-users"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Total Students</h3>
+      <p class="stat-number" id="stat-total-students">0</p>
+    </div>
+    <div class="stat-glow"></div>
+  </div>
+
+  <div class="stat-card present-card">
+    <div class="stat-icon">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Today Present</h3>
+      <p class="stat-number" id="stat-present-today">0</p>
+    </div>
+    <div class="stat-glow"></div>
+  </div>
+
+  <div class="stat-card absent-card">
+    <div class="stat-icon">
+      <i class="fa-solid fa-circle-xmark"></i>
+    </div>
+    <div class="stat-info">
+      <h3>Absent Today</h3>
+      <p class="stat-number" id="stat-absent-today">0</p>
+    </div>
+    <div class="stat-glow"></div>
+  </div>
+</div>
+
+<!-- Quick Actions & Recent Activity -->
+<div class="dashboard-details">
+  <!-- Quick Actions -->
+  <div class="card quick-actions-card">
+    <div class="card-header">
+      <h2><i class="fa-solid fa-bolt"></i> Quick Actions</h2>
+    </div>
+    <div class="actions-grid">
+      <button class="action-btn start-attendance-btn" id="btn-quick-start">
+        <i class="fa-solid fa-camera"></i>
+        <span>📸 Start Attendance</span>
+      </button>
+      <button class="action-btn add-student-btn" id="btn-quick-add">
+        <i class="fa-solid fa-user-plus"></i>
+        <span>➕ Add Student</span>
+      </button>
+      <button class="action-btn view-records-btn" id="btn-quick-records">
+        <i class="fa-solid fa-file-invoice"></i>
+        <span>📋 View Records</span>
+      </button>
+      <button class="action-btn export-data-btn" id="btn-quick-export">
+        <i class="fa-solid fa-file-export"></i>
+        <span>📤 Export Data</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="card recent-activity-card">
+    <div class="card-header">
+      <h2><i class="fa-solid fa-clock"></i> Recent Activity</h2>
+    </div>
+    <ul class="activity-list" id="recent-activity-list">
+      <li class="loading-item">Loading activity logs...</li>
+    </ul>
+  </div>
+</div>
+{% endblock %}

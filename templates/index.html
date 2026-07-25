@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Face Recognition Attendance System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/static/style.css?v=20260725" />
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <div class="logo-icon">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <span class="brand-text">AttendanceAI</span>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li>
+                        <a href="/" class="nav-link active" id="nav-dashboard">
+                            <i class="fa-solid fa-chart-simple"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/students" class="nav-link" id="nav-students">
+                            <i class="fa-solid fa-users"></i>
+                            <span>Students</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/attendance" class="nav-link" id="nav-attendance">
+                            <i class="fa-solid fa-video"></i>
+                            <span>Live Attendance</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="/records" class="nav-link" id="nav-records">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                            <span>Records</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <span class="status-dot online"></span>
+                    <span class="status-label">System Online</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="app-header">
+                <div class="header-title">
+                    <h1 id="page-title">Dashboard</h1>
+                    <p id="page-subtitle">Welcome to your attendance control center.</p>
+                </div>
+                <div class="header-profile">
+                    <span class="profile-role">Administrator</span>
+                    <div class="avatar">
+                        <i class="fa-solid fa-user-tie"></i>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-body">
+                <!-- ============================================ -->
+                <!-- DASHBOARD SECTION -->
+                <!-- ============================================ -->
+                <div id="dashboard-section">
+                    <div class="stats-grid">
+                        <div class="stat-card total-students-card">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Total Students</h3>
+                                <p class="stat-number" id="stat-total-students">0</p>
+                            </div>
+                            <div class="stat-glow"></div>
+                        </div>
+                        <div class="stat-card present-card">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Today Present</h3>
+                                <p class="stat-number" id="stat-present-today">0</p>
+                            </div>
+                            <div class="stat-glow"></div>
+                        </div>
+                        <div class="stat-card absent-card">
+                            <div class="stat-icon">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </div>
+                            <div class="stat-info">
+                                <h3>Absent Today</h3>
+                                <p class="stat-number" id="stat-absent-today">0</p>
+                            </div>
+                            <div class="stat-glow"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-details">
+                        <div class="card quick-actions-card">
+                            <div class="card-header">
+                                <h2><i class="fa-solid fa-bolt"></i> Quick Actions</h2>
+                            </div>
+                            <div class="actions-grid">
+                                <button class="action-btn start-attendance-btn" id="btn-quick-start">
+                                    <i class="fa-solid fa-camera"></i>
+                                    <span>📸 Start Attendance</span>
+                                </button>
+                                <button class="action-btn add-student-btn" id="btn-quick-add">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                    <span>➕ Add Student</span>
+                                </button>
+                                <button class="action-btn view-records-btn" id="btn-quick-records">
+                                    <i class="fa-solid fa-file-invoice"></i>
+                                    <span>📋 View Records</span>
+                                </button>
+                                <button class="action-btn export-data-btn" id="btn-quick-export">
+                                    <i class="fa-solid fa-file-export"></i>
+                                    <span>📤 Export Data</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card recent-activity-card">
+                            <div class="card-header">
+                                <h2><i class="fa-solid fa-clock"></i> Recent Activity</h2>
+                            </div>
+                            <ul class="activity-list" id="recent-activity-list">
+                                <li class="loading-item">Loading activity logs...</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- STUDENTS SECTION -->
+                <!-- ============================================ -->
+                <div id="students-section" style="display:none;">
+                    <div class="students-layout">
+                        <!-- Student Form -->
+                        <div class="card form-card">
+                            <div class="card-header">
+                                <h2 id="form-header-title">➕ Add New Student</h2>
+                            </div>
+                            <form id="student-form">
+                                <input type="hidden" id="edit-mode" value="false" />
+                                <div class="form-group">
+                                    <label for="student-id">Student ID</label>
+                                    <input type="text" id="student-id" placeholder="e.g. 001" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="student-name">Full Name</label>
+                                    <input type="text" id="student-name" placeholder="e.g. John Doe" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="student-course">Course</label>
+                                    <input type="text" id="student-course" placeholder="e.g. BSCS" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="student-year">Year</label>
+                                    <input type="text" id="student-year" placeholder="e.g. 3rd Year" required />
+                                </div>
+                                <div class="student-image-tabs" role="tablist">
+                                    <button type="button" class="student-image-tab active" data-tab-target="upload-panel">Upload Photos</button>
+                                    <button type="button" class="student-image-tab" data-tab-target="camera-panel">Camera Capture</button>
+                                </div>
+                                <div class="image-panel active" id="upload-panel">
+                                    <div class="form-group">
+                                        <label>Upload 3-5 Photos</label>
+                                        <label for="student-photo-input" class="upload-dropzone" id="upload-zone">
+                                            <div>
+                                                <i class="fa-solid fa-cloud-arrow-up fa-2xl"></i>
+                                                <strong>Choose multiple images or drop them here</strong>
+                                                <span>Supports JPG, PNG, and WEBP.</span>
+                                            </div>
+                                            <input type="file" id="student-photo-input" class="student-photo-input" accept="image/*" multiple />
+                                        </label>
+                                        <div class="photo-counter" id="upload-photo-counter">0/5 photos selected</div>
+                                        <div class="section-note">Minimum 3 photos required. The first 5 images are kept.</div>
+                                        <div class="thumbnail-grid" id="upload-preview-grid"></div>
+                                    </div>
+                                </div>
+                                <div class="image-panel" id="camera-panel">
+                                    <div class="camera-shell">
+                                        <div>
+                                            <div class="camera-status">
+                                                <span class="status-dot" id="camera-status-dot"></span>
+                                                <span id="student-camera-status-text">Camera idle</span>
+                                            </div>
+                                            <div class="camera-messages" id="camera-support-note">Use Start Camera to begin live capture. Face detection appears in green when a face is visible.</div>
+                                        </div>
+                                        <div class="camera-stage">
+                                            <video id="camera-video" autoplay playsinline muted></video>
+                                            <canvas id="camera-overlay-canvas"></canvas>
+                                            <div class="camera-overlay-state" id="camera-face-indicator"></div>
+                                        </div>
+                                        <canvas id="camera-capture-canvas" style="display: none;"></canvas>
+                                        <div class="camera-controls">
+                                            <button type="button" class="btn btn-secondary" id="student-btn-start-camera">
+                                                <i class="fa-solid fa-play"></i> Start Camera
+                                            </button>
+                                            <button type="button" class="btn btn-secondary" id="student-btn-stop-camera" disabled>
+                                                <i class="fa-solid fa-stop"></i> Stop Camera
+                                            </button>
+                                            <button type="button" class="btn btn-primary" id="student-btn-capture-photo" disabled>
+                                                <i class="fa-solid fa-camera"></i> Capture Photo
+                                            </button>
+                                        </div>
+                                        <div class="photo-counter" id="camera-photo-counter">0/5 photos captured</div>
+                                        <div class="section-note">Capture at least 3 photos from different angles for better recognition accuracy.</div>
+                                        <div class="thumbnail-grid" id="camera-preview-grid"></div>
+                                    </div>
+                                </div>
+                                <div class="form-actions" style="margin-top: 1rem;">
+                                    <button type="submit" class="btn btn-primary" id="btn-save-student">
+                                        <i class="fa-solid fa-floppy-disk"></i> Save Student
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="btn-reset-form">
+                                        <i class="fa-solid fa-rotate-left"></i> Reset
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        <!-- Student List -->
+                        <div class="card list-card">
+                            <div class="card-header student-list-header">
+                                <h2>👥 Student List</h2>
+                                <div class="search-box">
+                                    <input type="text" id="student-search" placeholder="Search by ID or Name..." />
+                                    <button class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="data-table" id="student-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Course</th>
+                                            <th>Year</th>
+                                            <th>Photos</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="student-table-body"></tbody>
+                                </table>
+                            </div>
+                            <div class="list-footer">
+                                <button class="btn btn-outline" id="btn-export-students-csv">
+                                    <i class="fa-solid fa-file-csv"></i> 📤 Export CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- ATTENDANCE SECTION -->
+                <!-- ============================================ -->
+                <div id="attendance-section" style="display:none;">
+                    <div class="live-layout">
+                        <div class="card camera-card">
+                            <div class="card-header camera-header">
+                                <h2><i class="fa-solid fa-camera"></i> Camera Feed</h2>
+                                <span class="camera-status" id="camera-status-badge">
+                                    <span class="status-dot offline"></span>
+                                    <span id="camera-status-text">Camera Off</span>
+                                </span>
+                            </div>
+                            <div class="video-container">
+                                <img id="video-feed-img" src="" alt="Live Video Feed" class="video-placeholder" />
+                                <div class="video-overlay-placeholder" id="video-feed-placeholder">
+                                    <i class="fa-solid fa-video-slash"></i>
+                                    <p>Camera is stopped. Click Start to begin attendance tracking.</p>
+                                </div>
+                            </div>
+                            <div class="video-controls">
+                                <button class="btn btn-success" id="btn-start-camera">
+                                    <i class="fa-solid fa-play"></i> ▶️ Start
+                                </button>
+                                <button class="btn btn-danger" id="btn-stop-camera" disabled>
+                                    <i class="fa-solid fa-square"></i> ⏹️ Stop
+                                </button>
+                                <button class="btn btn-primary" id="btn-save-stop-camera" disabled>
+                                    <i class="fa-solid fa-circle-check"></i> 💾 Save & Stop
+                                </button>
+                                <button class="btn btn-secondary" id="btn-reset-session">
+                                    <i class="fa-solid fa-rotate-left"></i> 🔄 Reset Today
+                                </button>
+                            </div>
+                            <div class="counters-grid">
+                                <div class="counter-box detected">
+                                    <span class="counter-title">Faces Detected</span>
+                                    <span class="counter-val" id="count-detected">0</span>
+                                </div>
+                                <div class="counter-box recognized">
+                                    <span class="counter-title">Recognized</span>
+                                    <span class="counter-val" id="count-recognized">0</span>
+                                </div>
+                                <div class="counter-box unknown">
+                                    <span class="counter-title">Unknown</span>
+                                    <span class="counter-val" id="count-unknown">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card live-list-card">
+                            <div class="card-header">
+                                <h2>📋 Today's Attendance List</h2>
+                            </div>
+                            <div class="live-list-container">
+                                <ul class="live-attendance-list" id="live-attendance-list"></ul>
+                            </div>
+                            <div class="live-list-footer">
+                                <span id="live-list-summary">Total Logged: 0 / 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ============================================ -->
+                <!-- RECORDS SECTION -->
+                <!-- ============================================ -->
+                <div id="records-section" style="display:none;">
+                    <div class="card filter-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-filter"></i> Filters</h2>
+                        </div>
+                        <div class="filter-controls">
+                            <div class="filter-group">
+                                <label for="filter-date">Date</label>
+                                <input type="date" id="filter-date" />
+                            </div>
+                            <div class="filter-group">
+                                <label for="filter-search">Search Name</label>
+                                <input type="text" id="filter-search" placeholder="Enter student name..." />
+                            </div>
+                            <div class="filter-buttons">
+                                <button class="btn btn-primary" id="btn-apply-filters">
+                                    <i class="fa-solid fa-magnifying-glass"></i> 🔍 Apply
+                                </button>
+                                <button class="btn btn-secondary" id="btn-reset-filters">
+                                    <i class="fa-solid fa-rotate-left"></i> 🔄 Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card records-list-card">
+                        <div class="card-header records-header">
+                            <h2>📋 Attendance Records</h2>
+                            <button class="btn btn-success" id="btn-export-records-csv">
+                                <i class="fa-solid fa-file-csv"></i> 📤 Export CSV
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="data-table" id="records-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Date</th>
+                                        <th>Name</th>
+                                        <th>Time</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="records-table-body"></tbody>
+                            </table>
+                        </div>
+                        <div class="records-footer">
+                            <span id="records-total-count">Total Records: 0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='script.js', v='20260725') }}"></script>
+</body>
+</html>
