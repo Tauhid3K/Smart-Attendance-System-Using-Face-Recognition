@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block active_tab %}attendance{% endblock %}
+{% block page_title %}Live Attendance Tracker{% endblock %}
+{% block page_subtitle %}Perform automated attendance using face recognition.{% endblock %}
+
+{% block content %}
+<div class="live-layout">
+  <!-- Camera Feed View -->
+  <div class="card camera-card">
+    <div class="card-header camera-header">
+      <h2><i class="fa-solid fa-camera"></i> Camera Feed</h2>
+      <span class="camera-status" id="camera-status-badge">
+        <span class="status-dot offline"></span>
+        <span id="camera-status-text">Camera Off</span>
+      </span>
+    </div>
+    
+    <div class="video-container">
+      <!-- The dynamic stream image -->
+      <img id="video-feed-img" src="" alt="Live Video Feed" class="video-placeholder" />
+      <div class="video-overlay-placeholder" id="video-feed-placeholder">
+        <i class="fa-solid fa-video-slash"></i>
+        <p>Camera is stopped. Click Start to begin attendance tracking.</p>
+      </div>
+    </div>
+    
+    <div class="video-controls">
+      <button class="btn btn-success" id="btn-start-camera">
+        <i class="fa-solid fa-play"></i> ▶️ Start
+      </button>
+      <button class="btn btn-danger" id="btn-stop-camera" disabled>
+        <i class="fa-solid fa-square"></i> ⏹️ Stop
+      </button>
+      <button class="btn btn-primary" id="btn-save-stop-camera" disabled>
+        <i class="fa-solid fa-circle-check"></i> 💾 Save & Stop
+      </button>
+      <button class="btn btn-secondary" id="btn-reset-session">
+        <i class="fa-solid fa-rotate-left"></i> 🔄 Reset Today
+      </button>
+    </div>
+    
+    <!-- Recognition Counters -->
+    <div class="counters-grid">
+      <div class="counter-box detected">
+        <span class="counter-title">Faces Detected</span>
+        <span class="counter-val" id="count-detected">0</span>
+      </div>
+      <div class="counter-box recognized">
+        <span class="counter-title">Recognized</span>
+        <span class="counter-val" id="count-recognized">0</span>
+      </div>
+      <div class="counter-box unknown">
+        <span class="counter-title">Unknown</span>
+        <span class="counter-val" id="count-unknown">0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Today's Attendance List -->
+  <div class="card live-list-card">
+    <div class="card-header">
+      <h2>📋 Today's Attendance List</h2>
+    </div>
+    
+    <div class="live-list-container">
+      <ul class="live-attendance-list" id="live-attendance-list">
+        <!-- Rendered Dynamically -->
+      </ul>
+    </div>
+    
+    <div class="live-list-footer">
+      <span id="live-list-summary">Total Logged: 0 / 0</span>
+    </div>
+  </div>
+</div>
+{% endblock %}

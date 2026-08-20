@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+
+{% block active_tab %}students{% endblock %}
+{% block page_title %}Manage Students{% endblock %}
+{% block page_subtitle %}Register, update, and manage student face profiles.{% endblock %}
+
+{% block content %}
+<style>
+  .students-layout { display: grid; grid-template-columns: 1.1fr 1.2fr; gap: 1.25rem; }
+  
+  /* Student Image Tabs */
+  .student-image-tabs { display: flex; gap: .75rem; margin: 1rem 0 1.25rem; }
+  .student-image-tab { flex: 1; border: 1px solid rgba(148, 163, 184, .24); background: rgba(15, 23, 42, .35); color: inherit; padding: .9rem 1rem; border-radius: 14px; cursor: pointer; transition: .2s ease; font-family: inherit; font-size: .95rem; }
+  .student-image-tab.active { background: linear-gradient(135deg, #1d4ed8, #0f766e); border-color: transparent; box-shadow: 0 10px 30px rgba(29, 78, 216, .22); color: white; }
+  .image-panel { display: none; }
+  .image-panel.active { display: block; }
+  
+  /* Upload Dropzone */
+  .upload-dropzone { border: 2px dashed rgba(148, 163, 184, .3); border-radius: 18px; background: rgba(15, 23, 42, .32); display: flex; align-items: center; justify-content: center; min-height: 150px; text-align: center; padding: 1rem; cursor: pointer; transition: .3s ease; }
+  .upload-dropzone:hover { border-color: #6366f1; background: rgba(99, 102, 241, .05); }
+  .upload-dropzone strong { display: block; margin-top: .5rem; }
+  .upload-dropzone i { font-size: 2.5rem; color: var(--text-secondary); }
+  .upload-dropzone span { color: var(--text-muted); font-size: .85rem; }
+  .student-photo-input { display: none; }
+  
+  /* Photo Counter & Notes */
+  .photo-counter { margin-top: .75rem; font-weight: 700; color: #60a5fa; }
+  .section-note { margin-top: .75rem; font-size: .9rem; color: rgba(226, 232, 240, .72); }
+  
+  /* Thumbnail Grid */
+  .thumbnail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: .75rem; margin-top: 1rem; }
+  .thumbnail-card { position: relative; border-radius: 16px; overflow: hidden; background: rgba(15, 23, 42, .45); border: 1px solid rgba(148, 163, 184, .18); }
+  .thumbnail-card img { width: 100%; height: 112px; object-fit: cover; display: block; }
+  .thumbnail-card .thumb-label { padding: .5rem .6rem; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); }
+  .thumbnail-remove { position: absolute; top: .5rem; right: .5rem; width: 1.8rem; height: 1.8rem; border: 0; border-radius: 999px; background: rgba(15, 23, 42, .88); color: #fff; cursor: pointer; font-size: 1.2rem; line-height: 1; display: flex; align-items: center; justify-content: center; transition: .2s ease; }
+  .thumbnail-remove:hover { background: var(--danger); transform: scale(1.1); }
+  
+  /* Camera Stage */
+  .camera-shell { display: grid; gap: 1rem; }
+  .camera-stage { position: relative; width: 100%; aspect-ratio: 16 / 10; overflow: hidden; border-radius: 20px; background: #020617; }
+  .camera-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+  .camera-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+  .camera-overlay-state { position: absolute; inset: 1rem; border: 2px solid rgba(239, 68, 68, .85); border-radius: 18px; pointer-events: none; transition: .18s ease; box-shadow: inset 0 0 0 1px rgba(239, 68, 68, .2); z-index: 3; }
+  .camera-overlay-state.face-visible { border-color: rgba(34, 197, 94, .95); box-shadow: 0 0 0 1px rgba(34, 197, 94, .25), inset 0 0 0 1px rgba(34, 197, 94, .18); }
+  
+  /* Camera Controls */
+  .camera-controls { display: flex; flex-wrap: wrap; gap: .75rem; }
+  .camera-controls .btn { flex: 1; min-width: 120px; }
+  
+  /* Camera Status */
+  .camera-status { display: inline-flex; align-items: center; gap: .5rem; margin-bottom: .25rem; font-weight: 700; }
+  .camera-status .status-dot { width: .65rem; height: .65rem; border-radius: 999px; background: #ef4444; box-shadow: 0 0 0 4px rgba(239, 68, 68, .18); transition: .3s ease; }
+  .camera-status .status-dot.on { background: #22c55e; box-shadow: 0 0 0 4px rgba(34, 197, 94, .18); }
+  .camera-status .status-dot.idle { background: #f59e0b; box-shadow: 0 0 0 4px rgba(245, 158, 11, .18); }
+  .camera-messages { font-size: .92rem; color: rgba(226, 232, 240, .72); }
+  
+  /* Form Actions */
+  .form-actions { display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap; }
+  
+  /* Responsive */
+  @media (max-width: 1100px) { .students-layout { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) { 
+    .camera-controls .btn { min-width: 100%; } 
+    .student-image-tabs { flex-direction: column; }
+    .thumbnail-grid { grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); }
+    .thumbnail-card img { height: 80px; }
+  }
+</style>
+
+<div class="students-layout">
+  <!-- ============================================ -->
+  <!-- STUDENT FORM -->
+  <!-- ============================================ -->
+  <div class="card form-card">
+    <div class="card-header">
+      <h2 id="form-header-title">➕ Add New Student</h2>
+    </div>
+
+    <form id="student-form">
+      <input type="hidden" id="edit-mode" value="false" />
+
+      <!-- Student Details -->
+      <div class="form-group">
+        <label for="student-id">Student ID</label>
+        <input type="text" id="student-id" placeholder="e.g. 001" required />
+      </div>
+
+      <div class="form-group">
+        <label for="student-name">Full Name</label>
+        <input type="text" id="student-name" placeholder="Enter full name" required />
+      </div>
+
+      <div class="form-group">
+        <label for="student-course">Subject</label>
+        <input type="text" id="student-course" placeholder="e.g. Mathematics" required />
+      </div>
+
+      <div class="form-group">
+        <label for="student-year">Year</label>
+        <input type="text" id="student-year" placeholder="e.g. 3rd Year" required />
+      </div>
+
+      <div class="form-group">
+        <label for="student-semester">Semester</label>
+        <input type="text" id="student-semester" placeholder="e.g. 5th Semester" />
+      </div>
+
+      <!-- Image Tabs -->
+      <div class="student-image-tabs" role="tablist">
+        <button type="button" class="student-image-tab active" data-tab-target="camera-panel"><i class="fa-solid fa-video"></i> Video Auto-Enroll</button>
+        <button type="button" class="student-image-tab" data-tab-target="manual-capture-panel"><i class="fa-solid fa-camera"></i> Manual Capture</button>
+        <button type="button" class="student-image-tab" data-tab-target="upload-panel"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Photos</button>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- VIDEO ENROLL PANEL -->
+      <!-- ============================================ -->
+      <div class="image-panel active" id="camera-panel">
+        <div class="camera-shell">
+          <!-- ── Pose Guide (above camera) ── -->
+          <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border:1px solid rgba(99,179,237,0.18);border-radius:14px;padding:0.85rem 1rem 0.75rem;margin-bottom:0.75rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+              <i class="fa-solid fa-list-check" style="color:#63b3ed;font-size:0.95rem;"></i>
+              <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;letter-spacing:.04em;text-transform:uppercase;">Face Pose Guide &mdash; 10 Steps</span>
+              <span style="margin-left:auto;color:#94a3b8;font-size:0.75rem;">Hold 5 s each &mdash; or press <strong style="color:#63b3ed;">Capture Now</strong></span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.35rem 1rem;">
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">1</span><span style="color:#cbd5e1;font-size:0.78rem;">Face front &mdash; neutral expression</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">2</span><span style="color:#cbd5e1;font-size:0.78rem;">Face front &mdash; smile naturally</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">3</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head slightly left</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">4</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head slightly right</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">5</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head moderately left</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">6</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head moderately right</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">7</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt chin slightly upward</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">8</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt chin slightly downward</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">9</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt head left (ear &rarr; shoulder)</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">10</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt head right (ear &rarr; shoulder)</span></div>
+            </div>
+          </div>
+          <!-- OpenCV Stream -->
+          <div class="camera-stage" style="min-height:340px;">
+            <img id="opencv-enrollment-stream" src="" style="display: none; width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; z-index: 5; border-radius: 18px;" alt="OpenCV Guided Stream" />
+            <video id="camera-video" autoplay playsinline muted style="display:none;"></video>
+            <canvas id="camera-overlay-canvas" style="display:none;"></canvas>
+            <canvas id="camera-capture-canvas" style="display:none;"></canvas>
+            <div class="camera-overlay-state" id="camera-face-indicator"></div>
+          </div>
+          <!-- Controls -->
+          <div class="camera-controls" style="margin-top:1rem;">
+            <button type="button" class="btn btn-primary btn-lg-full" id="student-btn-opencv-enroll">
+              <i class="fa-solid fa-circle-play"></i> Start Guided Face Capture
+            </button>
+            <button type="button" class="btn btn-secondary" id="student-btn-stop-camera" disabled>
+              <i class="fa-solid fa-stop"></i> Stop
+            </button>
+            <button type="button" class="btn btn-success" id="student-btn-manual-capture" style="display:none;">
+              <i class="fa-solid fa-camera"></i> Capture Now
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- UPLOAD PANEL -->
+      <!-- ============================================ -->
+      <div class="image-panel" id="upload-panel">
+        <div class="form-group">
+          <label>Upload Face Photos (3–5 images)</label>
+          <label for="student-photo-input" class="upload-dropzone" id="upload-zone">
+            <div>
+              <i class="fa-solid fa-cloud-arrow-up fa-2xl"></i>
+              <strong>Choose multiple images or drop them here</strong>
+              <span>10 angles recommended: neutral, smiling, slight/medium left &amp; right, tilt up/down, head tilt left/right. Supports JPG, PNG, WEBP.</span>
+            </div>
+            <input type="file" id="student-photo-input" class="student-photo-input" accept="image/*" multiple />
+          </label>
+          <div class="photo-counter" id="upload-photo-counter">0/5 photos selected</div>
+          <div class="section-note">Minimum 3 photos required. Upload photos from different angles for better recognition accuracy.</div>
+          <div class="thumbnail-grid" id="upload-preview-grid"></div>
+        </div>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- MANUAL CAPTURE PANEL -->
+      <!-- ============================================ -->
+      <div class="image-panel" id="manual-capture-panel">
+        <div class="camera-shell">
+          <!-- ── Pose Guide (above camera) ── -->
+          <div style="background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border:1px solid rgba(99,179,237,0.18);border-radius:14px;padding:0.85rem 1rem 0.75rem;margin-bottom:0.75rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.6rem;">
+              <i class="fa-solid fa-list-check" style="color:#63b3ed;font-size:0.95rem;"></i>
+              <span style="color:#e2e8f0;font-weight:700;font-size:0.85rem;letter-spacing:.04em;text-transform:uppercase;">Face Pose Guide &mdash; 10 Steps</span>
+              <span style="margin-left:auto;color:#94a3b8;font-size:0.75rem;">Position each pose, then press <strong style="color:#63b3ed;">Capture Now</strong></span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:0.35rem 1rem;">
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">1</span><span style="color:#cbd5e1;font-size:0.78rem;">Face front &mdash; neutral expression</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">2</span><span style="color:#cbd5e1;font-size:0.78rem;">Face front &mdash; smile naturally</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">3</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head slightly left</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">4</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head slightly right</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">5</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head moderately left</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">6</span><span style="color:#cbd5e1;font-size:0.78rem;">Turn head moderately right</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">7</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt chin slightly upward</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">8</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt chin slightly downward</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">9</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt head left (ear &rarr; shoulder)</span></div>
+              <div style="display:flex;align-items:center;gap:0.45rem;"><span style="background:#1d4ed8;color:#fff;font-size:0.65rem;font-weight:700;border-radius:50%;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;">10</span><span style="color:#cbd5e1;font-size:0.78rem;">Tilt head right (ear &rarr; shoulder)</span></div>
+            </div>
+          </div>
+          <div class="camera-stage" style="min-height:300px;">
+            <video id="manual-camera-video" autoplay playsinline muted style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:18px;display:none;"></video>
+            <canvas id="manual-camera-canvas" style="display:none;"></canvas>
+            <div class="camera-overlay-state" id="manual-face-indicator"></div>
+            <div id="manual-pose-overlay" style="position:absolute;top:12px;left:0;right:0;text-align:center;z-index:10;pointer-events:none;">
+              <span id="manual-pose-label" style="background:rgba(15,23,42,0.75);color:#e0f2fe;padding:4px 16px;border-radius:20px;font-size:0.85rem;font-weight:600;letter-spacing:.03em;">Step 1/10 &mdash; Face front, neutral expression</span>
+            </div>
+          </div>
+          <div class="camera-controls" style="margin-top:1rem;">
+            <button type="button" class="btn btn-primary" id="manual-btn-start">
+              <i class="fa-solid fa-circle-play"></i> Start Camera
+            </button>
+            <button type="button" class="btn btn-success btn-lg-full" id="manual-btn-capture" disabled
+              style="font-size:1rem;padding:0.65rem 1.4rem;">
+              <i class="fa-solid fa-camera"></i> Capture Now
+            </button>
+            <button type="button" class="btn btn-secondary" id="manual-btn-stop" disabled>
+              <i class="fa-solid fa-stop"></i> Stop
+            </button>
+          </div>
+          <div style="margin-top:0.8rem;display:flex;justify-content:center;gap:10px;" id="manual-pose-dots">
+            <!-- dots rendered by JS -->
+          </div>
+          <div class="thumbnail-grid" id="manual-preview-grid" style="margin-top:0.8rem;"></div>
+        </div>
+      </div>
+
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="btn-save-student">
+          <i class="fa-solid fa-floppy-disk"></i> Save Student
+        </button>
+        <button type="button" class="btn btn-secondary" id="btn-reset-form">
+          <i class="fa-solid fa-rotate-left"></i> Reset
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- STUDENT LIST -->
+  <!-- ============================================ -->
+  <div class="card list-card">
+    <div class="card-header student-list-header">
+      <h2>👥 Student List</h2>
+      <div class="search-box">
+        <input type="text" id="student-search" placeholder="Search by ID or Name..." />
+        <button class="search-btn"><i class="fa-solid fa-magnifying-glass"></i></button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table" id="student-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Subject</th>
+            <th>Year</th>
+            <th>Semester</th>
+            <th>Photos</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="student-table-body">
+          <!-- Rendered by JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="list-footer">
+      <button class="btn btn-outline" id="btn-export-students-csv">
+        <i class="fa-solid fa-file-csv"></i> 📤 Export CSV
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
